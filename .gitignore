@@ -1,0 +1,6 @@
+.venv
+processed_output
+logs
+.env
+.DS_Store
+*.DS_Store

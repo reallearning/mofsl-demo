@@ -1,0 +1,1 @@
+ pip install schedule requests fastapi uvicorn dotenv langchain_openai langchain pyodbc bs4
