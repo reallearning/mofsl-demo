@@ -1,7 +1,12 @@
 
+import os
 from typing import Callable, Dict, Optional, Type
 from pydantic import BaseModel, Field
 from langchain_core.tools import BaseTool
+from langchain_core.callbacks import CallbackManagerForToolRun, AsyncCallbackManagerForToolRun
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 
@@ -762,6 +767,7 @@ def account_opening_api_caller(api_name: str, api_args: dict = {},record_api_cal
         # A simple example structure. Each scenario returns a JSON representing
         # the result of that call. Replace or extend as necessary.
 
+        print("kra_validated_but_cannot_trade")
         if api_name == "lead_not_found_in_saathi":
             response = {
                 "status": "success",
@@ -972,6 +978,7 @@ def account_opening_api_caller(api_name: str, api_args: dict = {},record_api_cal
                 },
             }
         elif api_name == "kra_validated_but_cannot_trade":
+
             response = {
                 "status": "success",
                 "data": {
@@ -1131,763 +1138,766 @@ def account_opening_api_caller(api_name: str, api_args: dict = {},record_api_cal
 
 class Account_opening_api_callerTool(BaseTool):
     name: str = "account_opening_api_caller"
-    description: str =  """
-        The api_caller function handles all scenarios that need an API according to
-        your dataset. You can call this function with a specific api_name and any
-        relevant api_args (if required for that scenario). It then returns a JSON
-        object describing the result or data for that operation.
+    description: str = """The api_caller function handles all scenarios that need an API according to
+your dataset. You can call this function with a specific api_name and any
+relevant api_args (if required for that scenario). It then returns a JSON
+object describing the result or data for that operation.
 
-        Below is the list of recognized api_name values, along with a brief
-        description of what each does, possible api_args, and what the return
-        JSON looks like.
+Below is the list of recognized api_name values, along with a brief
+description of what each does, possible api_args, and what the return
+JSON looks like.
 
-        1) "lead_not_found_in_saathi"
-           ----------------------------------------------------
-           Description:
-             Checks if a lead exists in the Saathi system for a given client code
-             and returns information about the lead status.
-           Expected api_args:
-             {
-               "client_code": str
-             }
-           Return (example):
-             {
-               "status": "success",
-               "data": {
-                 "leadFound": bool,
-                 "message": str
-               }
-             }
+1) "lead_not_found_in_saathi"
+   ----------------------------------------------------
+   Description:
+     Checks if a lead exists in the Saathi system for a given client code
+     and returns information about the lead status.
+   Expected api_args:
+     {
+       "client_code": str
+     }
+   Return (example):
+     {
+       "status": "success",
+       "data": {
+         "leadFound": bool,
+         "message": str
+       }
+     }
 
-        2) "why_pan_already_exists"
-           ----------------------------------------------------
-           Description:
-             Verifies if a given PAN is already present in the system.
-           Expected api_args:
-             {
-               "pan_number": str
-             }
-           Return (example):
-             {
-               "status": "success",
-               "data": {
-                 "panStatus": "Duplicate" or "Unique",
-                 "message": str
-               }
-             }
+2) "why_pan_already_exists"
+   ----------------------------------------------------
+   Description:
+     Verifies if a given PAN is already present in the system.
+   Expected api_args:
+     {
+       "pan_number": str
+     }
+   Return (example):
+     {
+       "status": "success",
+       "data": {
+         "panStatus": "Duplicate" or "Unique",
+         "message": str
+       }
+     }
 
-        3) "provide_zoom_link_non_individual"
-           ----------------------------------------------------
-           Description:
-             Retrieves Zoom link details for non-individual account opening.
-           Expected api_args: {}
-           Return (example):
-             {
-               "status": "success",
-               "data": {
-                 "zoomMeetingID": str,
-                 "meetingPasscode": str,
-                 "message": str
-               }
-             }
+3) "provide_zoom_link_non_individual"
+   ----------------------------------------------------
+   Description:
+     Retrieves Zoom link details for non-individual account opening.
+   Expected api_args: {}
+   Return (example):
+     {
+       "status": "success",
+       "data": {
+         "zoomMeetingID": str,
+         "meetingPasscode": str,
+         "message": str
+       }
+     }
 
-        4) "checklist_for_individual"
-           ----------------------------------------------------
-           Description:
-             Returns information on where to locate the checklist or form
-             for opening an individual account.
-           Expected api_args: {}
-           Return (example):
-             {
-               "status": "success",
-               "data": {
-                 "checklistPath": str,
-                 "message": str
-               }
-             }
+4) "checklist_for_individual"
+   ----------------------------------------------------
+   Description:
+     Returns information on where to locate the checklist or form
+     for opening an individual account.
+   Expected api_args: {}
+   Return (example):
+     {
+       "status": "success",
+       "data": {
+         "checklistPath": str,
+         "message": str
+       }
+     }
 
-        5) "checklist_for_non_individual"
-           ----------------------------------------------------
-           Description:
-             Returns details on where to locate the checklist or form
-             for non-individual account opening.
-           Expected api_args: {}
-           Return (example):
-             {
-               "status": "success",
-               "data": {
-                 "checklistPath": str,
-                 "message": str
-               }
-             }
+5) "checklist_for_non_individual"
+   ----------------------------------------------------
+   Description:
+     Returns details on where to locate the checklist or form
+     for non-individual account opening.
+   Expected api_args: {}
+   Return (example):
+     {
+       "status": "success",
+       "data": {
+         "checklistPath": str,
+         "message": str
+       }
+     }
 
-        6) "why_acop_form_rejected"
-           ----------------------------------------------------
-           Description:
-             Fetches reasons why an ACOP physical form was rejected
-             in the audit/inspection process.
-           Expected api_args:
-             {
-               "client_code": str
-             }
-           Return (example):
-             {
-               "status": "success",
-               "data": {
-                 "rejectionReason": str,
-                 "message": str
-               }
-             }
+6) "why_acop_form_rejected"
+   ----------------------------------------------------
+   Description:
+     Fetches reasons why an ACOP physical form was rejected
+     in the audit/inspection process.
+   Expected api_args:
+     {
+       "client_code": str
+     }
+   Return (example):
+     {
+       "status": "success",
+       "data": {
+         "rejectionReason": str,
+         "message": str
+       }
+     }
 
-        7) "kyc_non_compliance_clarification"
-           ----------------------------------------------------
-           Description:
-             Looks up the reasons for a KYC non-compliance objection.
-           Expected api_args:
-             {
-               "client_code": str
-             }
-           Return (example):
-             {
-               "status": "success",
-               "data": {
-                 "objectionDetail": str,
-                 "message": str
-               }
-             }
+7) "kyc_non_compliance_clarification"
+   ----------------------------------------------------
+   Description:
+     Looks up the reasons for a KYC non-compliance objection.
+   Expected api_args:
+     {
+       "client_code": str
+     }
+   Return (example):
+     {
+       "status": "success",
+       "data": {
+         "objectionDetail": str,
+         "message": str
+       }
+     }
 
-        8) "ipv_not_found"
-           ----------------------------------------------------
-           Description:
-             Checks if an IPV code or name is present.
-           Expected api_args:
-             {
-               "ipv_code": str,
-               "ipv_name": str
-             }
-           Return (example):
-             {
-               "status": "success",
-               "data": {
-                 "ipvFound": bool,
-                 "message": str
-               }
-             }
+8) "ipv_not_found"
+   ----------------------------------------------------
+   Description:
+     Checks if an IPV code or name is present.
+   Expected api_args:
+     {
+       "ipv_code": str,
+       "ipv_name": str
+     }
+   Return (example):
+     {
+       "status": "success",
+       "data": {
+         "ipvFound": bool,
+         "message": str
+       }
+     }
 
-        9) "email_mobile_validation_link"
-           ----------------------------------------------------
-           Description:
-             Validates whether an email/mobile verification link was sent.
-           Expected api_args:
-             {
-               "client_code": str,
-               "email": str,
-               "mobile": str
-             }
-           Return (example):
-             {
-               "status": "success",
-               "data": {
-                 "linkDispatched": bool,
-                 "message": str
-               }
-             }
+9) "email_mobile_validation_link"
+   ----------------------------------------------------
+   Description:
+     Validates whether an email/mobile verification link was sent.
+   Expected api_args:
+     {
+       "client_code": str,
+       "email": str,
+       "mobile": str
+     }
+   Return (example):
+     {
+       "status": "success",
+       "data": {
+         "linkDispatched": bool,
+         "message": str
+       }
+     }
 
-        10) "segment_activation_status"
-           ----------------------------------------------------
-           Description:
-             Retrieves the status of segment activation for a given client code.
-           Expected api_args:
-             {
-               "client_code": str
-             }
-           Return (example):
-             {
-               "status": "success",
-               "data": {
-                 "activatedSegments": [str],
-                 "message": str
-               }
-             }
+10) "segment_activation_status"
+   ----------------------------------------------------
+   Description:
+     Retrieves the status of segment activation for a given client code.
+   Expected api_args:
+     {
+       "client_code": str
+     }
+   Return (example):
+     {
+       "status": "success",
+       "data": {
+         "activatedSegments": [str],
+         "message": str
+       }
+     }
 
-        11) "where_to_check_sample_form"
-           ----------------------------------------------------
-           Description:
-             Returns directions for where to locate a sample form.
-           Expected api_args: {}
-           Return (example):
-             {
-               "status": "success",
-               "data": {
-                 "pathInfo": str,
-                 "message": str
-               }
-             }
+11) "where_to_check_sample_form"
+   ----------------------------------------------------
+   Description:
+     Returns directions for where to locate a sample form.
+   Expected api_args: {}
+   Return (example):
+     {
+       "status": "success",
+       "data": {
+         "pathInfo": str,
+         "message": str
+       }
+     }
 
-        12) "code_blocked_iaa"
-           ----------------------------------------------------
-           Description:
-             Checks details if a code is blocked for IAA despite KRA being validated.
-           Expected api_args:
-             {
-               "client_code": str
-             }
-           Return (example):
-             {
-               "status": "success",
-               "data": {
-                 "blockedReason": str,
-                 "message": str
-               }
-             }
+12) "code_blocked_iaa"
+   ----------------------------------------------------
+   Description:
+     Checks details if a code is blocked for IAA despite KRA being validated.
+   Expected api_args:
+     {
+       "client_code": str
+     }
+   Return (example):
+     {
+       "status": "success",
+       "data": {
+         "blockedReason": str,
+         "message": str
+       }
+     }
 
-        13) "nri_dormant_activation"
-           ----------------------------------------------------
-           Description:
-             Retrieves instructions or status for reactivating a dormant NRI account.
-           Expected api_args:
-             {
-               "client_code": str,
-               "location": "abroad" or "india"
-             }
-           Return (example):
-             {
-               "status": "success",
-               "data": {
-                 "documentsRequired": [str],
-                 "message": str
-               }
-             }
+13) "nri_dormant_activation"
+   ----------------------------------------------------
+   Description:
+     Retrieves instructions or status for reactivating a dormant NRI account.
+   Expected api_args:
+     {
+       "client_code": str,
+       "location": "abroad" or "india"
+     }
+   Return (example):
+     {
+       "status": "success",
+       "data": {
+         "documentsRequired": [str],
+         "message": str
+       }
+     }
 
-        14) "dormant_status_online"
-           ----------------------------------------------------
-           Description:
-             Checks the status of a dormant account reactivation request placed online.
-           Expected api_args:
-             {
-               "client_code": str
-             }
-           Return (example):
-             {
-               "status": "success",
-               "data": {
-                 "dormantStatus": "Active" or "Pending",
-                 "message": str
-               }
-             }
+14) "dormant_status_online"
+   ----------------------------------------------------
+   Description:
+     Checks the status of a dormant account reactivation request placed online.
+   Expected api_args:
+     {
+       "client_code": str
+     }
+   Return (example):
+     {
+       "status": "success",
+       "data": {
+         "dormantStatus": "Active" or "Pending",
+         "message": str
+       }
+     }
 
-        15) "dormant_status_offline"
-           ----------------------------------------------------
-           Description:
-             Checks the status of a dormant reactivation request placed offline.
-           Expected api_args:
-             {
-               "sr_number": str
-             }
-           Return (example):
-             {
-               "status": "success",
-               "data": {
-                 "reactivationProgress": str,
-                 "message": str
-               }
-             }
+15) "dormant_status_offline"
+   ----------------------------------------------------
+   Description:
+     Checks the status of a dormant reactivation request placed offline.
+   Expected api_args:
+     {
+       "sr_number": str
+     }
+   Return (example):
+     {
+       "status": "success",
+       "data": {
+         "reactivationProgress": str,
+         "message": str
+       }
+     }
 
-        16) "check_objection_new_account"
-           ----------------------------------------------------
-           Description:
-             Looks up objection details for a new account application.
-           Expected api_args:
-             {
-               "client_code": str
-             }
-           Return (example):
-             {
-               "status": "success",
-               "data": {
-                 "currentObjection": str,
-                 "message": str
-               }
-             }
+16) "check_objection_new_account"
+   ----------------------------------------------------
+   Description:
+     Looks up objection details for a new account application.
+   Expected api_args:
+     {
+       "client_code": str
+     }
+   Return (example):
+     {
+       "status": "success",
+       "data": {
+         "currentObjection": str,
+         "message": str
+       }
+     }
 
-        17) "check_objection_modification"
-           ----------------------------------------------------
-           Description:
-             Looks up objection details for a modification request.
-           Expected api_args:
-             {
-               "client_code": str
-             }
-           Return (example):
-             {
-               "status": "success",
-               "data": {
-                 "currentObjection": str,
-                 "message": str
-               }
-             }
+17) "check_objection_modification"
+   ----------------------------------------------------
+   Description:
+     Looks up objection details for a modification request.
+   Expected api_args:
+     {
+       "client_code": str
+     }
+   Return (example):
+     {
+       "status": "success",
+       "data": {
+         "currentObjection": str,
+         "message": str
+       }
+     }
 
-        18) "clear_objection_new_account"
-           ----------------------------------------------------
-           Description:
-             Indicates the steps taken to clear an objection raised for a new account.
-           Expected api_args:
-             {
-               "client_code": str
-             }
-           Return (example):
-             {
-               "status": "success",
-               "data": {
-                 "objectionCleared": bool,
-                 "message": str
-               }
-             }
+18) "clear_objection_new_account"
+   ----------------------------------------------------
+   Description:
+     Indicates the steps taken to clear an objection raised for a new account.
+   Expected api_args:
+     {
+       "client_code": str
+     }
+   Return (example):
+     {
+       "status": "success",
+       "data": {
+         "objectionCleared": bool,
+         "message": str
+       }
+     }
 
-        19) "clear_objection_modification"
-           ----------------------------------------------------
-           Description:
-             Indicates how an objection for a modification was cleared.
-           Expected api_args:
-             {
-               "client_code": str
-             }
-           Return (example):
-             {
-               "status": "success",
-               "data": {
-                 "objectionCleared": bool,
-                 "message": str
-               }
-             }
+19) "clear_objection_modification"
+   ----------------------------------------------------
+   Description:
+     Indicates how an objection for a modification was cleared.
+   Expected api_args:
+     {
+       "client_code": str
+     }
+   Return (example):
+     {
+       "status": "success",
+       "data": {
+         "objectionCleared": bool,
+         "message": str
+       }
+     }
 
-        20) "clear_objection_closure"
-           ----------------------------------------------------
-           Description:
-             States how an objection for a closure request was resolved.
-           Expected api_args:
-             {
-               "client_code": str
-             }
-           Return (example):
-             {
-               "status": "success",
-               "data": {
-                 "objectionCleared": bool,
-                 "message": str
-               }
-             }
+20) "clear_objection_closure"
+   ----------------------------------------------------
+   Description:
+     States how an objection for a closure request was resolved.
+   Expected api_args:
+     {
+       "client_code": str
+     }
+   Return (example):
+     {
+       "status": "success",
+       "data": {
+         "objectionCleared": bool,
+         "message": str
+       }
+     }
 
-        21) "what_is_my_objection"
-           ----------------------------------------------------
-           Description:
-             Retrieves a direct objection description tied to a client code.
-           Expected api_args:
-             {
-               "client_code": str
-             }
-           Return:
-             {
-               "status": "success",
-               "data": {
-                 "objectionDetail": str,
-                 "message": str
-               }
-             }
+21) "what_is_my_objection"
+   ----------------------------------------------------
+   Description:
+     Retrieves a direct objection description tied to a client code.
+   Expected api_args:
+     {
+       "client_code": str
+     }
+   Return:
+     {
+       "status": "success",
+       "data": {
+         "objectionDetail": str,
+         "message": str
+       }
+     }
 
-        22) "why_objection_raised"
-           ----------------------------------------------------
-           Description:
-             Explains the cause for an objection that has been raised.
-           Expected api_args:
-             {
-               "client_code": str
-             }
-           Return:
-             {
-               "status": "success",
-               "data": {
-                 "causeOfObjection": str,
-                 "message": str
-               }
-             }
+22) "why_objection_raised"
+   ----------------------------------------------------
+   Description:
+     Explains the cause for an objection that has been raised.
+   Expected api_args:
+     {
+       "client_code": str
+     }
+   Return:
+     {
+       "status": "success",
+       "data": {
+         "causeOfObjection": str,
+         "message": str
+       }
+     }
 
-        23) "cvl_kra_valid_but_iaa"
-           ----------------------------------------------------
-           Description:
-             Checks if CVL KRA is valid but the account is still in IAA status.
-           Expected api_args:
-             {
-               "client_code": str
-             }
-           Return:
-             {
-               "status": "success",
-               "data": {
-                 "activationPendingReason": str,
-                 "message": str
-               }
-             }
+23) "cvl_kra_valid_but_iaa"
+   ----------------------------------------------------
+   Description:
+     Checks if CVL KRA is valid but the account is still in IAA status.
+   Expected api_args:
+     {
+       "client_code": str
+     }
+   Return:
+     {
+       "status": "success",
+       "data": {
+         "activationPendingReason": str,
+         "message": str
+       }
+     }
 
-        24) "why_dp_freeze"
-           ----------------------------------------------------
-           Description:
-             Retrieves the reason a DP is frozen for a given client code.
-           Expected api_args:
-             {
-               "client_code": str
-             }
-           Return:
-             {
-               "status": "success",
-               "data": {
-                 "freezeReason": str,
-                 "message": str
-               }
-             }
+24) "why_dp_freeze"
+   ----------------------------------------------------
+   Description:
+     Retrieves the reason a DP is frozen for a given client code.
+   Expected api_args:
+     {
+       "client_code": str
+     }
+   Return:
+     {
+       "status": "success",
+       "data": {
+         "freezeReason": str,
+         "message": str
+       }
+     }
 
-        25) "why_ac_suspended_iaa"
-           ----------------------------------------------------
-           Description:
-             Provides reasons why an account is suspended due to IAA/KYC non-compliance.
-           Expected api_args:
-             {
-               "client_code": str
-             }
-           Return:
-             {
-               "status": "success",
-               "data": {
-                 "suspensionReason": str,
-                 "message": str
-               }
-             }
+25) "why_ac_suspended_iaa"
+   ----------------------------------------------------
+   Description:
+     Provides reasons why an account is suspended due to IAA/KYC non-compliance.
+   Expected api_args:
+     {
+       "client_code": str
+     }
+   Return:
+     {
+       "status": "success",
+       "data": {
+         "suspensionReason": str,
+         "message": str
+       }
+     }
 
-        26) "kra_validated_but_cannot_trade"
-           ----------------------------------------------------
-           Description:
-             Checks if KRA is validated but the client still cannot trade, possibly
-             awaiting system updates or RMS checks.
-           Expected api_args:
-             {
-               "client_code": str
-             }
-           Return:
-             {
-               "status": "success",
-               "data": {
-                 "canTrade": bool,
-                 "message": str
-               }
-             }
+26) "kra_validated_but_cannot_trade"
+   ----------------------------------------------------
+   Description:
+     Checks if KRA is validated but the client still cannot trade, possibly
+     awaiting system updates or RMS checks.
+   Expected api_args:
+     {
+       "client_code": str
+     }
+   Return:
+     {
+       "status": "success",
+       "data": {
+         "canTrade": bool,
+         "message": str
+       }
+     }
 
-        27) "kra_validation_failure"
-           ----------------------------------------------------
-           Description:
-             Provides instructions or status about a failed KRA validation.
-           Expected api_args:
-             {
-               "pan_number": str,
-               "mobile": str,
-               "email": str
-             }
-           Return:
-             {
-               "status": "success",
-               "data": {
-                 "validationLink": str,
-                 "message": str
-               }
-             }
+27) "kra_validation_failure"
+   ----------------------------------------------------
+   Description:
+     Provides instructions or status about a failed KRA validation.
+   Expected api_args:
+     {
+       "pan_number": str,
+       "mobile": str,
+       "email": str
+     }
+   Return:
+     {
+       "status": "success",
+       "data": {
+         "validationLink": str,
+         "message": str
+       }
+     }
 
-        28) "invalid_pan"
-           ----------------------------------------------------
-           Description:
-             Explains or checks if the provided PAN is invalid in the system.
-           Expected api_args:
-             {
-               "pan_number": str
-             }
-           Return:
-             {
-               "status": "success",
-               "data": {
-                 "panValid": bool,
-                 "message": str
-               }
-             }
+28) "invalid_pan"
+   ----------------------------------------------------
+   Description:
+     Explains or checks if the provided PAN is invalid in the system.
+   Expected api_args:
+     {
+       "pan_number": str
+     }
+   Return:
+     {
+       "status": "success",
+       "data": {
+         "panValid": bool,
+         "message": str
+       }
+     }
 
-        29) "segment_status_check"
-           ----------------------------------------------------
-           Description:
-             Another way to see how segment activation is proceeding or completed.
-           Expected api_args:
-             {
-               "client_code": str
-             }
-           Return:
-             {
-               "status": "success",
-               "data": {
-                 "activationDetails": [str],
-                 "message": str
-               }
-             }
+29) "segment_status_check"
+   ----------------------------------------------------
+   Description:
+     Another way to see how segment activation is proceeding or completed.
+   Expected api_args:
+     {
+       "client_code": str
+     }
+   Return:
+     {
+       "status": "success",
+       "data": {
+         "activationDetails": [str],
+         "message": str
+       }
+     }
 
-        30) "why_new_ac_tba"
-           ----------------------------------------------------
-           Description:
-             Reveals why a new account is showing as TBA (to be activated).
-           Expected api_args:
-             {
-               "client_code": str
-             }
-           Return:
-             {
-               "status": "success",
-               "data": {
-                 "remainingSteps": str,
-                 "message": str
-               }
-             }
+30) "why_new_ac_tba"
+   ----------------------------------------------------
+   Description:
+     Reveals why a new account is showing as TBA (to be activated).
+   Expected api_args:
+     {
+       "client_code": str
+     }
+   Return:
+     {
+       "status": "success",
+       "data": {
+         "remainingSteps": str,
+         "message": str
+       }
+     }
 
-        31) "why_account_status_iaa"
-           ----------------------------------------------------
-           Description:
-             Clarifies why an account status is IAA while DP status is not frozen.
-           Expected api_args:
-             {
-               "client_code": str
-             }
-           Return:
-             {
-               "status": "success",
-               "data": {
-                 "suspensionCause": str,
-                 "message": str
-               }
-             }
+31) "why_account_status_iaa"
+   ----------------------------------------------------
+   Description:
+     Clarifies why an account status is IAA while DP status is not frozen.
+   Expected api_args:
+     {
+       "client_code": str
+     }
+   Return:
+     {
+       "status": "success",
+       "data": {
+         "suspensionCause": str,
+         "message": str
+       }
+     }
 
-        32) "when_will_activate"
-           ----------------------------------------------------
-           Description:
-             Tells how much time is left until the account is activated.
-           Expected api_args:
-             {
-               "client_code": str
-             }
-           Return:
-             {
-               "status": "success",
-               "data": {
-                 "activationETA": str,
-                 "message": str
-               }
-             }
+32) "when_will_activate"
+   ----------------------------------------------------
+   Description:
+     Tells how much time is left until the account is activated.
+   Expected api_args:
+     {
+       "client_code": str
+     }
+   Return:
+     {
+       "status": "success",
+       "data": {
+         "activationETA": str,
+         "message": str
+       }
+     }
 
-        33) "why_dp_activation_pending"
-           ----------------------------------------------------
-           Description:
-             Returns the reason why DP activation is still pending for an account.
-           Expected api_args:
-             {
-               "client_code": str
-             }
-           Return:
-             {
-               "status": "success",
-               "data": {
-                 "pendingReason": str,
-                 "message": str
-               }
-             }
+33) "why_dp_activation_pending"
+   ----------------------------------------------------
+   Description:
+     Returns the reason why DP activation is still pending for an account.
+   Expected api_args:
+     {
+       "client_code": str
+     }
+   Return:
+     {
+       "status": "success",
+       "data": {
+         "pendingReason": str,
+         "message": str
+       }
+     }
 
-        34) "why_validation_error"
-           ----------------------------------------------------
-           Description:
-             Investigates a validation error the user may be seeing
-             during or after account activation.
-           Expected api_args:
-             {
-               "client_code": str
-             }
-           Return:
-             {
-               "status": "success",
-               "data": {
-                 "errorDetails": str,
-                 "message": str
-               }
-             }
+34) "why_validation_error"
+   ----------------------------------------------------
+   Description:
+     Investigates a validation error the user may be seeing
+     during or after account activation.
+   Expected api_args:
+     {
+       "client_code": str
+     }
+   Return:
+     {
+       "status": "success",
+       "data": {
+         "errorDetails": str,
+         "message": str
+       }
+     }
 
-        35) "dispatch_details_not_showing"
-           ----------------------------------------------------
-           Description:
-             Checks why dispatch details for a courier are not visible in CBOS 2.0.
-           Expected api_args:
-             {
-               "client_code": str,
-               "dispatchType": str  # e.g., "ACOP", "MODIFICATION", "CLOSURE"
-             }
-           Return:
-             {
-               "status": "success",
-               "data": {
-                 "foundDispatch": bool,
-                 "message": str
-               }
-             }
+35) "dispatch_details_not_showing"
+   ----------------------------------------------------
+   Description:
+     Checks why dispatch details for a courier are not visible in CBOS 2.0.
+   Expected api_args:
+     {
+       "client_code": str,
+       "dispatchType": str  # e.g., "ACOP", "MODIFICATION", "CLOSURE"
+     }
+   Return:
+     {
+       "status": "success",
+       "data": {
+         "foundDispatch": bool,
+         "message": str
+       }
+     }
 
-        37) "courier_received_confirmation"
-           ----------------------------------------------------
-           Description:
-             Confirms whether a courier was received at the HO.
-           Expected api_args:
-             {
-               "packet_number": str
-             }
-           Return:
-             {
-               "status": "success",
-               "data": {
-                 "courierReceived": bool,
-                 "message": str
-               }
-             }
+37) "courier_received_confirmation"
+   ----------------------------------------------------
+   Description:
+     Confirms whether a courier was received at the HO.
+   Expected api_args:
+     {
+       "packet_number": str
+     }
+   Return:
+     {
+       "status": "success",
+       "data": {
+         "courierReceived": bool,
+         "message": str
+       }
+     }
 
-        38) "courier_dispatched_not_ack"
-           ----------------------------------------------------
-           Description:
-             Checks if a dispatched courier is still awaiting acknowledgement.
-           Expected api_args:
-             {
-               "packet_number": str
-             }
-           Return:
-             {
-               "status": "success",
-               "data": {
-                 "acknowledged": bool,
-                 "message": str
-               }
-             }
+38) "courier_dispatched_not_ack"
+   ----------------------------------------------------
+   Description:
+     Checks if a dispatched courier is still awaiting acknowledgement.
+   Expected api_args:
+     {
+       "packet_number": str
+     }
+   Return:
+     {
+       "status": "success",
+       "data": {
+         "acknowledged": bool,
+         "message": str
+       }
+     }
 
-        39) "code_not_reflecting_in_dispatch"
-           ----------------------------------------------------
-           Description:
-             Checks why a particular code does not show in courier dispatch records.
-           Expected api_args:
-             {
-               "client_code": str
-             }
-           Return:
-             {
-               "status": "success",
-               "data": {
-                 "isCodeListed": bool,
-                 "message": str
-               }
-             }
+39) "code_not_reflecting_in_dispatch"
+   ----------------------------------------------------
+   Description:
+     Checks why a particular code does not show in courier dispatch records.
+   Expected api_args:
+     {
+       "client_code": str
+     }
+   Return:
+     {
+       "status": "success",
+       "data": {
+         "isCodeListed": bool,
+         "message": str
+       }
+     }
 
-        40) "why_ekyc_ac_tba"
-           ----------------------------------------------------
-           Description:
-             Explains why an eKYC-based account is still at TBA status.
-           Expected api_args:
-             {
-               "client_code": str
-             }
-           Return:
-             {
-               "status": "success",
-               "data": {
-                 "activationPendingReason": str,
-                 "message": str
-               }
-             }
+40) "why_ekyc_ac_tba"
+   ----------------------------------------------------
+   Description:
+     Explains why an eKYC-based account is still at TBA status.
+   Expected api_args:
+     {
+       "client_code": str
+     }
+   Return:
+     {
+       "status": "success",
+       "data": {
+         "activationPendingReason": str,
+         "message": str
+       }
+     }
 
-        41) "single_holder_rejected_to_ekyc"
-           ----------------------------------------------------
-           Description:
-             Indicates that single-holder accounts must use eKYC, clarifies
-             why CBOS punching was rejected.
-           Expected api_args:
-             {
-               "client_code": str
-             }
-           Return:
-             {
-               "status": "success",
-               "data": {
-                 "requiredProcess": "EKYC",
-                 "message": str
-               }
-             }
+41) "single_holder_rejected_to_ekyc"
+   ----------------------------------------------------
+   Description:
+     Indicates that single-holder accounts must use eKYC, clarifies
+     why CBOS punching was rejected.
+   Expected api_args:
+     {
+       "client_code": str
+     }
+   Return:
+     {
+       "status": "success",
+       "data": {
+         "requiredProcess": "EKYC",
+         "message": str
+       }
+     }
 
-        42) "not_able_to_request_kyc_form"
-           ----------------------------------------------------
-           Description:
-             Explains or processes requests for a KYC form if the user cannot request it
-             from CBOS 2.0.
-           Expected api_args:
-             {
-               "form_type": str
-             }
-           Return:
-             {
-               "status": "success",
-               "data": {
-                 "formAccess": bool,
-                 "message": str
-               }
-             }
+42) "not_able_to_request_kyc_form"
+   ----------------------------------------------------
+   Description:
+     Explains or processes requests for a KYC form if the user cannot request it
+     from CBOS 2.0.
+   Expected api_args:
+     {
+       "form_type": str
+     }
+   Return:
+     {
+       "status": "success",
+       "data": {
+         "formAccess": bool,
+         "message": str
+       }
+     }
 
-        43) "i_want_my_acop_form"
-           ----------------------------------------------------
-           Description:
-             Retrieves the ACOP form or the path to it, often from the
-             client dashboard.
-           Expected api_args:
-             {
-               "client_code": str
-             }
-           Return:
-             {
-               "status": "success",
-               "data": {
-                 "acopFormLink": str,
-                 "message": str
-               }
-             }
+43) "i_want_my_acop_form"
+   ----------------------------------------------------
+   Description:
+     Retrieves the ACOP form or the path to it, often from the
+     client dashboard.
+   Expected api_args:
+     {
+       "client_code": str
+     }
+   Return:
+     {
+       "status": "success",
+       "data": {
+         "acopFormLink": str,
+         "message": str
+       }
+     }
 
-        44) "where_check_kyc_scan"
-           ----------------------------------------------------
-           Description:
-             Informs where a user can find or view the KYC scan associated
-             with their account.
-           Expected api_args:
-             {
-               "client_code": str
-             }
-           Return:
-             {
-               "status": "success",
-               "data": {
-                 "kycScanAvailable": bool,
-                 "scanPath": str,
-                 "message": str
-               }
-             }
-        """
+44) "where_check_kyc_scan"
+   ----------------------------------------------------
+   Description:
+     Informs where a user can find or view the KYC scan associated
+     with their account.
+   Expected api_args:
+     {
+       "client_code": str
+     }
+   Return:
+     {
+       "status": "success",
+       "data": {
+         "kycScanAvailable": bool,
+         "scanPath": str,
+         "message": str
+       }
+     }"""
     args_schema: Type[BaseModel] = Account_opening_api_callerInput
     
 
-    def _run(self, api_name: str, api_args: dict)->str:
+    def _run(self, api_name: str, api_args: Optional[dict]=None, run_manager: Optional[CallbackManagerForToolRun] = None):
+        if api_args is None:
+            api_args = {}
+        print(api_name)
         if self.metadata is None:
             raise ValueError("Metadata is not provided")
         return account_opening_api_caller(api_name, api_args, self.metadata.get("record_api_call", None))
 
-    async def _arun(self, api_name: str, api_args: dict)->str:
+    async def _arun(self, api_name: str, api_args: Optional[dict] = None, run_manager: Optional[AsyncCallbackManagerForToolRun] = None):
+        if api_args is None:
+            api_args = {}
         if self.metadata is None:
             raise ValueError("Metadata is not provided")
         return account_opening_api_caller(api_name, api_args, self.metadata.get("record_api_call", None))
@@ -1922,7 +1932,7 @@ def banking_api_caller(api_name: str, api_args: dict = {},record_api_call:Option
 
             api_args (Optional[Dict]):
                 A dictionary holding any arguments or details needed for the selected operation.
-                Content and structure may vary depending on the 'api_name' in use. Some examples:
+                Content and structure may vary depending on the ‘api_name’ in use. Some examples:
                     - client_code: str
                     - date_range: Dict (e.g., {"start_date": "YYYY-MM-DD", "end_date": "YYYY-MM-DD"})
                     - sub_broker_code: str
@@ -2129,7 +2139,7 @@ Parameters:
 
     api_args (Optional[Dict]):
         A dictionary holding any arguments or details needed for the selected operation.
-        Content and structure may vary depending on the 'api_name' in use. Some examples:
+        Content and structure may vary depending on the ‘api_name’ in use. Some examples:
             - client_code: str
             - date_range: Dict (e.g., {"start_date": "YYYY-MM-DD", "end_date": "YYYY-MM-DD"})
             - sub_broker_code: str
@@ -2151,12 +2161,16 @@ Usage:
     args_schema: Type[BaseModel] = Banking_api_callerInput
     
 
-    async def _arun(self, api_name: str, api_args: dict):
+    async def _arun(self, api_name: str, api_args: Optional[dict] = None,run_manager: Optional[AsyncCallbackManagerForToolRun] = None):
+        if api_args is None:
+            api_args = {}
         if self.metadata is None:
           raise ValueError("Metadata is not provided")
         return banking_api_caller(api_name, api_args,self.metadata.get("record_api_call", None))
 
-    def _run(self, api_name: str, api_args: dict):
+    def _run(self, api_name: str, api_args: Optional[dict]=None,run_manager: Optional[CallbackManagerForToolRun] = None):
+        if api_args is None:
+            api_args = {}
         if self.metadata is None:
           raise ValueError("Metadata is not provided")
         return banking_api_caller(api_name, api_args,self.metadata.get("record_api_call", None))
@@ -2699,12 +2713,16 @@ print(result)
     args_schema: Type[BaseModel] = Bo_franchise_signoff_api_callerInput
     
 
-    async def _arun(self, api_name: str, api_args: dict):
+    async def _arun(self, api_name: str, api_args: Optional[dict] = None,run_manager: Optional[AsyncCallbackManagerForToolRun] = None):
+        if api_args is None:
+            api_args = {}
         if self.metadata is None:
           raise ValueError("Metadata is not provided")
         return bo_franchise_signoff_api_caller(api_name, api_args,self.metadata.get("record_api_call", None))
 
-    def _run(self, api_name: str, api_args: dict):
+    def _run(self, api_name: str, api_args: Optional[dict]=None,run_manager: Optional[CallbackManagerForToolRun] = None):
+        if api_args is None:
+            api_args = {}
         if self.metadata is None:
           raise ValueError("Metadata is not provided")
         return bo_franchise_signoff_api_caller(api_name, api_args,self.metadata.get("record_api_call", None))
@@ -3078,12 +3096,16 @@ Notes:
     args_schema: Type[BaseModel] = Clarification_on_brokerage_api_callerInput
     
 
-    async def _arun(self, api_name: str, api_args: dict):
+    async def _arun(self, api_name: str, api_args: Optional[dict] = None,run_manager: Optional[AsyncCallbackManagerForToolRun] = None):
+        if api_args is None:
+            api_args = {}
         if self.metadata is None:
           raise ValueError("Metadata is not provided")
         return clarification_on_brokerage_api_caller(api_name, api_args,self.metadata.get("record_api_call", None))
 
-    def _run(self, api_name: str, api_args: dict):
+    def _run(self, api_name: str, api_args: Optional[dict]=None,run_manager: Optional[CallbackManagerForToolRun] = None):
+        if api_args is None:
+            api_args = {}
         if self.metadata is None:
           raise ValueError("Metadata is not provided")
         return clarification_on_brokerage_api_caller(api_name, api_args,self.metadata.get("record_api_call", None))
@@ -3235,12 +3257,16 @@ response = api_caller("get_circular_for_penalty_charges", {"scenario_id": 772})"
     args_schema: Type[BaseModel] = Compliance_api_callerInput
     
 
-    async def _arun(self, api_name: str, api_args: dict):
+    async def _arun(self, api_name: str, api_args: Optional[dict] = None,run_manager: Optional[AsyncCallbackManagerForToolRun] = None):
+        if api_args is None:
+            api_args = {}
         if self.metadata is None:
           raise ValueError("Metadata is not provided")
         return compliance_api_caller(api_name, api_args,self.metadata.get("record_api_call", None))
 
-    def _run(self, api_name: str, api_args: dict):
+    def _run(self, api_name: str, api_args: Optional[dict]=None,run_manager: Optional[CallbackManagerForToolRun] = None):
+        if api_args is None:
+            api_args = {}
         if self.metadata is None:
           raise ValueError("Metadata is not provided")
         return compliance_api_caller(api_name, api_args,self.metadata.get("record_api_call", None))
@@ -3271,7 +3297,7 @@ def dp_api_caller(api_name: str, api_args: dict = {},record_api_call:Optional[Ca
               - additional fields or notes relevant to that scenario.
 
             Usage:
-            This function centralizes all possible "api_required" scenarios so that
+            This function centralizes all possible “api_required” scenarios so that
             a conversational or automation agent can retrieve the correct handling steps
             and references for each specific request. The structure may be expanded or
             replaced by real API integrations in the future.
@@ -3740,19 +3766,23 @@ class Dp_api_callerTool(BaseTool):
       - additional fields or notes relevant to that scenario.
 
     Usage:
-    This function centralizes all possible "api_required" scenarios so that
+    This function centralizes all possible “api_required” scenarios so that
     a conversational or automation agent can retrieve the correct handling steps
     and references for each specific request. The structure may be expanded or
     replaced by real API integrations in the future."""
     args_schema: Type[BaseModel] = Dp_api_callerInput
     
 
-    async def _arun(self, api_name: str, api_args: dict):
+    async def _arun(self, api_name: str, api_args: Optional[dict] = None,run_manager: Optional[AsyncCallbackManagerForToolRun] = None):
+        if api_args is None:
+            api_args = {}
         if self.metadata is None:
           raise ValueError("Metadata is not provided")
         return dp_api_caller(api_name, api_args,self.metadata.get("record_api_call", None))
 
-    def _run(self, api_name: str, api_args: dict):
+    def _run(self, api_name: str, api_args: Optional[dict]=None,run_manager: Optional[CallbackManagerForToolRun] = None):
+        if api_args is None:
+            api_args = {}
         if self.metadata is None:
           raise ValueError("Metadata is not provided")
         return dp_api_caller(api_name, api_args,self.metadata.get("record_api_call", None))
@@ -3992,12 +4022,16 @@ Usage Examples:
     args_schema: Type[BaseModel] = Edp_api_callerInput
     
 
-    async def _arun(self, api_name: str, api_args: dict):
+    async def _arun(self, api_name: str, api_args: Optional[dict] = None,run_manager: Optional[AsyncCallbackManagerForToolRun] = None):
+        if api_args is None:
+            api_args = {}
         if self.metadata is None:
           raise ValueError("Metadata is not provided")
         return edp_api_caller(api_name, api_args,self.metadata.get("record_api_call", None))
 
-    def _run(self, api_name: str, api_args: dict):
+    def _run(self, api_name: str, api_args: Optional[dict]=None,run_manager: Optional[CallbackManagerForToolRun] = None):
+        if api_args is None:
+            api_args = {}
         if self.metadata is None:
           raise ValueError("Metadata is not provided")
         return edp_api_caller(api_name, api_args,self.metadata.get("record_api_call", None))
@@ -4163,12 +4197,16 @@ Notes
     args_schema: Type[BaseModel] = Front_office_sales_query_api_callerInput
     
 
-    async def _arun(self, api_name: str, api_args: dict):
+    async def _arun(self, api_name: str, api_args: Optional[dict] = None,run_manager: Optional[AsyncCallbackManagerForToolRun] = None):
+        if api_args is None:
+            api_args = {}
         if self.metadata is None:
           raise ValueError("Metadata is not provided")
         return front_office_sales_query_api_caller(api_name, api_args,self.metadata.get("record_api_call", None))
 
-    def _run(self, api_name: str, api_args: dict):
+    def _run(self, api_name: str, api_args: Optional[dict]=None,run_manager: Optional[CallbackManagerForToolRun] = None):
+        if api_args is None:
+            api_args = {}
         if self.metadata is None:
           raise ValueError("Metadata is not provided")
         return front_office_sales_query_api_caller(api_name, api_args,self.metadata.get("record_api_call", None))
@@ -4314,12 +4352,16 @@ dict
     args_schema: Type[BaseModel] = Mo_genie_api_callerInput
     
 
-    async def _arun(self, api_name: str, api_args: dict):
+    async def _arun(self, api_name: str, api_args: Optional[dict] = None,run_manager: Optional[AsyncCallbackManagerForToolRun] = None):
+        if api_args is None:
+            api_args = {}
         if self.metadata is None:
           raise ValueError("Metadata is not provided")
         return mo_genie_api_caller(api_name, api_args,self.metadata.get("record_api_call", None))
 
-    def _run(self, api_name: str, api_args: dict):
+    def _run(self, api_name: str, api_args: Optional[dict]=None,run_manager: Optional[CallbackManagerForToolRun] = None):
+        if api_args is None:
+            api_args = {}
         if self.metadata is None:
           raise ValueError("Metadata is not provided")
         return mo_genie_api_caller(api_name, api_args,self.metadata.get("record_api_call", None))
@@ -4524,12 +4566,16 @@ on the scenario you need to handle."""
     args_schema: Type[BaseModel] = Modification_api_callerInput
     
 
-    async def _arun(self, api_name: str, api_args: dict):
+    async def _arun(self, api_name: str, api_args: Optional[dict] = None,run_manager: Optional[AsyncCallbackManagerForToolRun] = None):
+        if api_args is None:
+            api_args = {}
         if self.metadata is None:
           raise ValueError("Metadata is not provided")
         return modification_api_caller(api_name, api_args,self.metadata.get("record_api_call", None))
 
-    def _run(self, api_name: str, api_args: dict):
+    def _run(self, api_name: str, api_args: Optional[dict]=None,run_manager: Optional[CallbackManagerForToolRun] = None):
+        if api_args is None:
+            api_args = {}
         if self.metadata is None:
           raise ValueError("Metadata is not provided")
         return modification_api_caller(api_name, api_args,self.metadata.get("record_api_call", None))
@@ -4730,12 +4776,16 @@ Notes:
     args_schema: Type[BaseModel] = Mtf_api_callerInput
     
 
-    async def _arun(self, api_name: str, api_args: dict):
+    async def _arun(self, api_name: str, api_args: Optional[dict] = None,run_manager: Optional[AsyncCallbackManagerForToolRun] = None):
+        if api_args is None:
+            api_args = {}
         if self.metadata is None:
           raise ValueError("Metadata is not provided")
         return mtf_api_caller(api_name, api_args,self.metadata.get("record_api_call", None))
 
-    def _run(self, api_name: str, api_args: dict):
+    def _run(self, api_name: str, api_args: Optional[dict]=None,run_manager: Optional[CallbackManagerForToolRun] = None):
+        if api_args is None:
+            api_args = {}
         if self.metadata is None:
           raise ValueError("Metadata is not provided")
         return mtf_api_caller(api_name, api_args,self.metadata.get("record_api_call", None))
@@ -4884,12 +4934,16 @@ for the chosen API endpoint."""
     args_schema: Type[BaseModel] = Operations_api_callerInput
     
 
-    async def _arun(self, api_name: str, api_args: dict):
+    async def _arun(self, api_name: str, api_args: Optional[dict] = None,run_manager: Optional[AsyncCallbackManagerForToolRun] = None):
+        if api_args is None:
+            api_args = {}
         if self.metadata is None:
           raise ValueError("Metadata is not provided")
         return operations_api_caller(api_name, api_args,self.metadata.get("record_api_call", None))
 
-    def _run(self, api_name: str, api_args: dict):
+    def _run(self, api_name: str, api_args: Optional[dict]=None,run_manager: Optional[CallbackManagerForToolRun] = None):
+        if api_args is None:
+            api_args = {}
         if self.metadata is None:
           raise ValueError("Metadata is not provided")
         return operations_api_caller(api_name, api_args,self.metadata.get("record_api_call", None))
@@ -4997,12 +5051,16 @@ class Processing_activities_api_callerTool(BaseTool):
     args_schema: Type[BaseModel] = Processing_activities_api_callerInput
     
 
-    async def _arun(self, api_name: str, api_args: dict):
+    async def _arun(self, api_name: str, api_args: Optional[dict] = None,run_manager: Optional[AsyncCallbackManagerForToolRun] = None):
+        if api_args is None:
+            api_args = {}
         if self.metadata is None:
           raise ValueError("Metadata is not provided")
         return processing_activities_api_caller(api_name, api_args,self.metadata.get("record_api_call", None))
 
-    def _run(self, api_name: str, api_args: dict):
+    def _run(self, api_name: str, api_args: Optional[dict]=None,run_manager: Optional[CallbackManagerForToolRun] = None):
+        if api_args is None:
+            api_args = {}
         if self.metadata is None:
           raise ValueError("Metadata is not provided")
         return processing_activities_api_caller(api_name, api_args,self.metadata.get("record_api_call", None))
@@ -5193,12 +5251,16 @@ Usage
     args_schema: Type[BaseModel] = Rms_api_callerInput
     
 
-    async def _arun(self, api_name: str, api_args: dict):
+    async def _arun(self, api_name: str, api_args: Optional[dict] = None,run_manager: Optional[AsyncCallbackManagerForToolRun] = None):
+        if api_args is None:
+            api_args = {}
         if self.metadata is None:
           raise ValueError("Metadata is not provided")
         return rms_api_caller(api_name, api_args,self.metadata.get("record_api_call", None))
 
-    def _run(self, api_name: str, api_args: dict):
+    def _run(self, api_name: str, api_args: Optional[dict]=None,run_manager: Optional[CallbackManagerForToolRun] = None):
+        if api_args is None:
+            api_args = {}
         if self.metadata is None:
           raise ValueError("Metadata is not provided")
         return rms_api_caller(api_name, api_args,self.metadata.get("record_api_call", None))
@@ -5371,12 +5433,16 @@ Scenarios Covered (api_required = "Yes"):
     args_schema: Type[BaseModel] = Settlement_api_callerInput
     
 
-    async def _arun(self, api_name: str, api_args: dict):
+    async def _arun(self, api_name: str, api_args: Optional[dict] = None,run_manager: Optional[AsyncCallbackManagerForToolRun] = None):
+        if api_args is None:
+            api_args = {}
         if self.metadata is None:
           raise ValueError("Metadata is not provided")
         return settlement_api_caller(api_name, api_args,self.metadata.get("record_api_call", None))
 
-    def _run(self, api_name: str, api_args: dict):
+    def _run(self, api_name: str, api_args: Optional[dict]=None,run_manager: Optional[CallbackManagerForToolRun] = None):
+        if api_args is None:
+            api_args = {}
         if self.metadata is None:
           raise ValueError("Metadata is not provided")
         return settlement_api_caller(api_name, api_args,self.metadata.get("record_api_call", None))
@@ -5569,12 +5635,16 @@ Example:
     args_schema: Type[BaseModel] = Ekyc_api_callerInput
     
 
-    async def _arun(self, api_name: str, api_args: dict):
+    async def _arun(self, api_name: str, api_args: Optional[dict] = None,run_manager: Optional[AsyncCallbackManagerForToolRun] = None):
+        if api_args is None:
+            api_args = {}
         if self.metadata is None:
           raise ValueError("Metadata is not provided")
         return ekyc_api_caller(api_name, api_args,self.metadata.get("record_api_call", None))
 
-    def _run(self, api_name: str, api_args: dict):
+    def _run(self, api_name: str, api_args: Optional[dict]=None,run_manager: Optional[CallbackManagerForToolRun] = None):
+        if api_args is None:
+            api_args = {}
         if self.metadata is None:
           raise ValueError("Metadata is not provided")
         return ekyc_api_caller(api_name, api_args,self.metadata.get("record_api_call", None))
@@ -5585,10 +5655,13 @@ Example:
 
 import requests
 
+bassurl=os.getenv("BASE_URL", "http://localhost:8000")
 
 def generate_token(username):
     """Function to generate token for closure validation"""
-    url = "https://mofsl.co/closurevalidation/api/clsvalidation/generatetoken"
+
+    url = f"{bassurl}/closurevalidation/api/clsvalidation/generatetoken"
+    
     headers = {"Content-Type": "application/json"}
     data = {"username": username}
 
@@ -5623,7 +5696,8 @@ def fetch_client_data(clientcode, token):
             "data": {}
         }
     
-    url = "http://mofsl.co/closurevalidation/api/clsvalidation/fetchdata"
+
+    url=f"{bassurl}/closurevalidation/api/clsvalidation/fetchdata"
     headers = {
         "Authorization": f"Bearer {token}",
         "Content-Type": "application/json"

@@ -100,7 +100,8 @@ CONFIG = {
     "poll_interval_minutes": int(os.getenv("POLL_INTERVAL_MINUTES", "1")),
     "max_concurrent_emails": int(os.getenv("MAX_CONCURRENT_EMAILS", "5")),
     "queue_check_interval_seconds": int(os.getenv("QUEUE_CHECK_INTERVAL_SECONDS", "10")),
-    "last_pull_time_file": os.getenv("LAST_PULL_TIME_FILE", "last_pull_time.json")
+    "last_pull_time_file": os.getenv("LAST_PULL_TIME_FILE", "last_pull_time.json"),
+    "base_url": os.getenv("BASE_URL", "http://localhost:8000")
 }
 
 # Ensure output directory exists
@@ -255,7 +256,7 @@ def getUserType(email):
     """
     try:
         # Step 1: Generate token
-        token_url = "https://mofsl.co/getuserinfo/api/getuserinfo/generatetoken"
+        token_url = f"{CONFIG['base_url']}/getuserinfo/api/getuserinfo/generatetoken"
         token_payload = {"username": "TOKEN"}
         token_headers = {"Content-Type": "application/json"}
         
@@ -263,7 +264,7 @@ def getUserType(email):
         token = token_response.json()
         
         # Step 2: Get user info with token
-        user_url = "https://mofsl.co/getuserinfo/api/getuserinfo/fetchdata"
+        user_url = f"{CONFIG['base_url']}/getuserinfo/api/getuserinfo/fetchdata"
         user_headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {token}"
@@ -410,9 +411,7 @@ async def generate_token_async(username):
 
 def generate_token(username):
     """Function to generate token for closure validation"""
-    # url = "http://localhost:8000/api/airesponse/generatetoken"
-    url="https://085e-36-255-87-2.ngrok-free.app/api/airesponse/generatetoken"
-    # url = "https://mofsl.co/aimodelresponse/api/airesponse/generatetoken"
+    url = f"{CONFIG['base_url']}/aimodelresponse/api/airesponse/generatetoken"
 
     headers = {"Content-Type": "application/json"}
     data = {"username": username}
@@ -431,10 +430,7 @@ async def sendResponseToMO(response: dict):
     interaction_id = response['interaction_id']
     token = await generate_token_async("TOKEN")
     if token:
-        # url = "http://localhost:8000/api/airesponse/insertdata"
-        url="https://085e-36-255-87-2.ngrok-free.app/api/airesponse/insertdata"
-        # url = "https://mofsl.co/aimodelresponse/api/airesponse/insertdata"
-
+        url = f"{CONFIG['base_url']}/aimodelresponse/api/airesponse/insertdata"
         headers = {
             "Authorization": f"Bearer {token}",
             "Content-Type": "application/json"
