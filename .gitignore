@@ -8,3 +8,4 @@ logs
 setup.py
 test.ipynb
 build
+*.json
