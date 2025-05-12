@@ -5,3 +5,6 @@ logs
 .DS_Store
 *.DS_Store
 *.pyx
+setup.py
+test.ipynb
+build

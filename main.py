@@ -543,6 +543,9 @@ async def process_single_email(email):
                     "classification": category["classification"]
                 }
             )
+            if response.get("status") == "error":
+                logger.error(f"Interaction id: {interaction_id} | Response error: {response.get('error_message')}")
+                return False
             
             response_time = time.time() - response_start_time
             logger.info(f"Interaction id: {interaction_id} | Response generated in {response_time:.2f}s")
@@ -593,8 +596,10 @@ async def process_single_email(email):
             }
         }
         
+        logger.info(f"Interaction id: {interaction_id} | {json.dumps(output['body']['apis_called'], indent=2)}")
+
         # Send response to MO asynchronously
-        # await sendResponseToMO(output)
+        await sendResponseToMO(output)
         
         # Save to JSON file - run in thread pool to avoid blocking
         async def save_output_file():
