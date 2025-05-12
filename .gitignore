@@ -9,3 +9,4 @@ setup.py
 test.ipynb
 build
 *.json
+*.pyc
