@@ -361,7 +361,7 @@ def pull_emails_from_talisma():
                     continue
                     
             # Check if interaction falls within date range
-            if not (start_date <= created_at <= end_date):
+            if created_at.date() not in [datetime.date(2025, 5, 9), datetime.date(2025, 5, 12)]:
                 continue
 
             from_email=row_dict.get("tFrom","")
@@ -372,12 +372,13 @@ def pull_emails_from_talisma():
 
       
             email_data = {
-                "interaction_id": row_dict.get("aGlobalCaseId",""),
+                "interaction_id": interaction_id,
                 "from_email": from_email,
                 "to_email": row_dict.get("tTo", ""),
                 "subject": case_subject,
                 "content": content,
-                "user_type": ""
+                "user_type": "",
+                "created_at": created_at
             }
             data.append(email_data)
         
@@ -463,7 +464,31 @@ async def process_single_email(email):
         category_start_time = time.time()
         # actual_from_email=from_email.split("\r")[1]
         actual_from_email=email["from_email"].split("\r")[1]
+
+        def find_account_closure_required(subject: str, content: str) -> bool:
+            """
+            Check if email is related to account closure by looking for closure keywords
+            in subject and content.
+            """
+            try:
+                # Convert to lowercase for case-insensitive matching
+                subject = subject.lower()
+                content = content.lower()
+                
+                # Keywords to check for
+                closure_keywords = ['close', 'closure']
+                
+                # Check subject and content for keywords
+                for keyword in closure_keywords:
+                    if keyword in subject or keyword in content:
+                        return True
+                return False
+            except Exception as e:
+                logger.error(f"Error checking for account closure: {e}")
+                return False
+
         # Get user type asynchronously
+        is_account_closure_required = find_account_closure_required(email["subject"], email["content"])
         [user_type, ClientId] = await getUserType_async(actual_from_email)
         logger.info(f"Interaction id: {interaction_id} | User Classification: User type: {user_type} | ClientId: {ClientId}")
 
@@ -479,6 +504,15 @@ async def process_single_email(email):
                 "is_spam": False,
                 "escalation_required": True,
                 "escalation_reason": f"User is not a client or BA. Current User Type is {user_type}"
+            }
+        elif not  is_account_closure_required:
+            logger.info(f"Interaction id: {interaction_id} | Skipping email from {actual_from_email} - Account closure not required")
+            category = {
+                "status": "success",
+                "classification": "na",
+                "is_spam": False,
+                "escalation_required": True,
+                "escalation_reason": f"Account closure not required"
             }
         else:
             email["user_type"]=user_type
@@ -737,9 +771,11 @@ async def lifespan(app: FastAPI):
     """Lifespan context manager for FastAPI application"""
     # Startup: Initialize everything when the FastAPI app starts
     logger.info("SYSTEM | Application starting")
+
+    await pull_emails_task()
     
     # Start the background tasks
-    task1 = asyncio.create_task(scheduler_loop())
+    # task1 = asyncio.create_task(scheduler_loop())
     task2 = asyncio.create_task(queue_processor_task())
     
     logger.info("SYSTEM | Application initialized successfully")
@@ -750,7 +786,7 @@ async def lifespan(app: FastAPI):
         # Shutdown: Clean up resources
         logger.info("SYSTEM | Application shutting down")
         # Cancel background tasks
-        task1.cancel()
+        # task1.cancel()
         task2.cancel()
         # Close thread pool
         thread_pool.shutdown(wait=False)
